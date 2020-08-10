@@ -96,7 +96,7 @@ redirect_radius:slider_set_step_size(4, 0);
 local seconds_between_attack_move_checks = create_local_option("section_main", "seconds_between_attack_move_checks", "slider");
 seconds_between_attack_move_checks:slider_set_min_max(0.3, 20);
 seconds_between_attack_move_checks:slider_set_precision(1);
-seconds_between_attack_move_checks:set_default_value(1.1);
+seconds_between_attack_move_checks:set_default_value(0.7);
 seconds_between_attack_move_checks:slider_set_step_size(0.2, 1);
 
 local can_target_routing_enemies = create_local_option("section_main", "can_target_routing_enemies", "checkbox");
@@ -197,7 +197,7 @@ local add_adjust_ranged_if_target_in_melee = new_add_adjust("section_advanced", 
 local seconds_buffer_after_melee_ends = create_local_option("section_advanced", "seconds_buffer_after_melee_ends", "slider");
 seconds_buffer_after_melee_ends:slider_set_min_max(0.6, 9999);
 seconds_buffer_after_melee_ends:slider_set_precision(1);
-seconds_buffer_after_melee_ends:set_default_value(1.8);
+seconds_buffer_after_melee_ends:set_default_value(1.4);
 seconds_buffer_after_melee_ends:slider_set_step_size(0.6, 1);
 
 -- Tolerances

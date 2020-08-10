@@ -37,7 +37,7 @@ redirect_radius = 64
 -- This controls how often this mod checks for nearby targets and updates orders for units
 -- under its control
 
-seconds_between_attack_move_checks = 1.1
+seconds_between_attack_move_checks = 0.7
 
 ----------------------------------------------------------------------------------------------
 -- Should attack-moving units consider routing and/or shattered enemies to be
@@ -119,7 +119,7 @@ add_adjust_ranged_if_target_in_melee = 50
 -- Setting this too low (lower than maybe 1.2 or so?) might result in your units sometimes
 -- switching targets during battle if there are multiple nearby enemy units.
 
-seconds_buffer_after_melee_ends = 1.8
+seconds_buffer_after_melee_ends = 1.4
 
 ----------------------------------------------------------------------------------------------
 -- This position tolerance is large because the game's ordered_positions for cavalry
