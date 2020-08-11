@@ -48,6 +48,18 @@ can_target_routing_enemies = true
 can_target_shattered_enemies = false
 
 ----------------------------------------------------------------------------------------------
+-- When your attack-moving unit gets into melee, the attack move is either suspended or canceled
+-- Once the melee is finished, should the attack move be automatically resumed?
+
+resume_attack_move_after_combat = true
+
+----------------------------------------------------------------------------------------------
+-- When your attack-moving unit starts to flee, the attack move is either suspended or canceled
+-- If that unit rallies, should the attack move be automatically resumed?
+
+resume_attack_move_once_rallied = false
+
+----------------------------------------------------------------------------------------------
 -- !!!WARNING!!!: This option is experimental and certainly not polished. Giving attack-move orders
 --                during siege battles might cause strange behavior when your units are on or
 --                within the redirect_radius distance of a wall, especially for units that

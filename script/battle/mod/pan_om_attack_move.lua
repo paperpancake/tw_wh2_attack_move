@@ -96,7 +96,7 @@ local pan_om = {
 
     DONT_ALLOW_REDIRECT = 999999999,
 
-    is_debug = false
+    is_debug = true
                             --if you want to debug targets, you can use something like
                             -- --At the top of this file
                             --  local debug_old_target = nil;
@@ -185,10 +185,10 @@ local function try_to_get_MCT()
     return mct;
 end;
 
+--Note that the defaults for this mod are actually set in init_config_and_calc_values. This just handles variables that should be strings.
 local function create_config_table_with_defaults()
+
     local config = {
-        
-        hotkey_for_attack_move_lock = true,
 
         --This should save some text file users that might forget to put quotation marks around some strings like "script_F2"
         script_F2 = "script_F2",
@@ -279,10 +279,6 @@ local function try_loading_config_from_file()
 
     config = create_config_table_with_defaults();
 
-    if not pancake_config_loader then
-        require("script/pancake_lib/pan_om_config_loader");
-    end;
-
     success, file_found, msg, config = pancake_config_loader.load_file("./mod_config/attack_move_config.txt", config);
 
     if not file_found then
@@ -308,6 +304,10 @@ end;
 local function pancake_attack_move_load_config()
 
     local config, config_type, config_log_msg;
+    
+    if not pancake_config_loader then
+        require("script/pancake_lib/pan_om_config_loader");
+    end;
 
     config, config_type, config_log_msg = try_loading_config_from_mct();
 
@@ -446,6 +446,9 @@ function pan_om:init_config_and_calc_values(config)
     end;
 
     self.hotkey_for_attack_move_lock = bool_check(config.hotkey_for_attack_move_lock, true);
+
+    self.resume_attack_move_after_combat = bool_check(config.resume_attack_move_after_combat, true);
+    self.resume_attack_move_once_rallied = bool_check(config.resume_attack_move_once_rallied, false);
 
     self.tolerance_for_arrived_at_position = num_check(config.tolerance_for_arrived_at_position, 25);
     self.tolerance_for_arrived_at_bearing = num_check(config.tolerance_for_arrived_at_bearing, 10);
@@ -956,7 +959,7 @@ function pan_om:check_proximity_attacks()
 
         elseif current_order_set.suspended_due_to_rout then
 
-            --intentionally left blank
+            --intentionally left blank; we already called self:check_for_rallied_attack_movers() above this
 
         elseif current_friendly_unit:is_routing() then
             
@@ -968,9 +971,12 @@ function pan_om:check_proximity_attacks()
 
         elseif current_friendly_unit:is_in_melee() then
 
-            --self:debug("unit "..tostring(current_friendly_unit:name()).." is_in_melee");
-            current_order_set.melee_timestamp = timestamp_tick;
-            --skip giving orders to units in melee, but don't remove them from attack_move_orders
+            if self.resume_attack_move_after_combat then
+                --self:debug("unit "..tostring(current_friendly_unit:name()).." is_in_melee");
+                current_order_set.melee_timestamp = timestamp_tick;
+            else
+                self:_clear_attack_move_from_unit(current_friendly_id);
+            end;
 
         elseif self:might_unit_still_be_in_combat(current_order_set.melee_timestamp) or current_friendly_unit:is_rampaging() then
             --self:debug("unit "..tostring(current_friendly_unit:name()).." might still be in melee or is rampaging");
@@ -1055,13 +1061,15 @@ function pan_om:phase_prebattle()
 
     if bm:is_tutorial() then pan_om.out("Attack Move mod is disabled for this battle. This battle is a tutorial.") return; end;
 
+    local config_log_msg;
+    
     config, config_log_msg = pancake_attack_move_load_config();
 
     self:debug("After loading config");
 
     self:init_config_and_calc_values(config);
 
-    if not config.enable_during_siege_battles then
+    if not self.enable_during_siege_battles then
         if bm:is_siege_battle() then pan_om.out("Attack Move mod disabled. Skipping startup. This is a siege battle.") return; end;
     end;
 

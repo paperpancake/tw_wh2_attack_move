@@ -75,7 +75,7 @@ else
 end;
 
 -------------------------------------------------------------------------------------------------------------------------------
---- @section Main Hotkeys
+--- @section section_main
 -------------------------------------------------------------------------------------------------------------------------------
 
 mct_mod:add_new_section("section_main", "MCT Settings for Attack Move - Main Section", false);
@@ -104,6 +104,12 @@ can_target_routing_enemies:set_default_value(true);
 
 local can_target_shattered_enemies = create_local_option("section_main", "can_target_shattered_enemies", "checkbox");
 can_target_shattered_enemies:set_default_value(false);
+
+local resume_attack_move_after_combat = create_local_option("section_main", "resume_attack_move_after_combat", "checkbox");
+resume_attack_move_after_combat:set_default_value(true);
+
+local resume_attack_move_once_rallied = create_local_option("section_main", "resume_attack_move_once_rallied", "checkbox");
+resume_attack_move_once_rallied:set_default_value(false);
 
 
 -------------------------------------------------------------------------------------------------------------------------------
@@ -198,7 +204,7 @@ local seconds_buffer_after_melee_ends = create_local_option("section_advanced", 
 seconds_buffer_after_melee_ends:slider_set_min_max(0.6, 9999);
 seconds_buffer_after_melee_ends:slider_set_precision(1);
 seconds_buffer_after_melee_ends:set_default_value(1.4);
-seconds_buffer_after_melee_ends:slider_set_step_size(0.6, 1);
+seconds_buffer_after_melee_ends:slider_set_step_size(0.4, 1);
 
 -- Tolerances
 local tolerance_for_arrived_at_position = create_local_option("section_advanced", "tolerance_for_arrived_at_position", "slider");
