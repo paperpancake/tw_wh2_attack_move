@@ -528,8 +528,8 @@ function pan_om:create_attack_move_icon(ui_id)
 
                     if attack_move_icon then
                         
-                        attack_move_icon:SetCanResizeWidth(true)
-                        attack_move_icon:SetCanResizeHeight(true)
+                        attack_move_icon:SetCanResizeWidth(true);
+                        attack_move_icon:SetCanResizeHeight(true);
                         attack_move_icon:Resize(27, 36);
                         for i = 0, attack_move_icon:NumStates() do
                             attack_move_icon:SetImagePath("ui\\pancake_images\\icon_attack_move_above_unit.png", i);
@@ -756,7 +756,7 @@ end;
 --this function excludes units in a batch so that the UI can be updated all at once
 --This must be called from a callback context
 --this function will also call set_attack_move_button_state if that function exists
---IMPORTANT: this function assumes the given units are already in map_key_to_mock_sus
+--IMPORTANT: this function assumes the given units are already in map_ids_to_sus
 --           most units should be anyway, but if in doubt, check before calling this function 
 function pan_om:set_attack_move_for_units(table_of_unit_keys, turn_on, is_callback_context)
 
@@ -838,12 +838,12 @@ function pan_om:set_attack_move_for_units(table_of_unit_keys, turn_on, is_callba
     --self:debug("Done with set_attack_move_for_units");
 end;
 
---TOCONSIDER: Thoughts for multiplayer gifting:
+--TODO TOCONSIDER: Thoughts for multiplayer gifting:
 --            Should I check to see if the unit card exists here?
 --            Is it ok to create a script unit for different
 function pan_om:setup_map_ids_to_sus()
-    self:debug("in setup_map_ids_to_sus");
-    self:debug("in setup_map_ids_to_sus, player_alliance = "..tostring(bm:get_player_alliance()));
+    --self:debug("in setup_map_ids_to_sus");
+    --self:debug("in setup_map_ids_to_sus, player_alliance = "..tostring(bm:get_player_alliance()));
 
     for_each_unit_in_alliance(
         bm:get_player_alliance(),
@@ -851,13 +851,13 @@ function pan_om:setup_map_ids_to_sus()
             self:debug("Checking unit "..tostring(unit_index_in_army));
 			local ui_id = tostring(current_unit:unique_ui_id());
             if not self.map_ids_to_sus[ui_id] then
-                self:debug("Trying to create script unit for "..tostring(unit_index_in_army));
+                --self:debug("Trying to create script unit for "..tostring(unit_index_in_army));
                 self.map_ids_to_sus[ui_id] = script_unit:new(current_army, unit_index_in_army);
-                self:debug("Was script unit created? "..tostring(self.map_ids_to_sus[ui_id]));
+                --self:debug("Was script unit created? "..tostring(self.map_ids_to_sus[ui_id]));
 			end;
         end
 	);
-	self:debug("end of setup_map_ids_to_sus");
+	--self:debug("end of setup_map_ids_to_sus");
 end;
 
 function pan_om:find_su_with_id(unique_ui_id)
@@ -1198,11 +1198,13 @@ function pan_om:check_proximity_attacks()
             );
 
 			if chosen_target then
-                --self:debug("ordering an attack against "..tostring(chosen_target:name()));
-				local current_uc = current_friendly_su.uc;
+                self:debug("ordering an attack against "..tostring(chosen_target:name()));
+                local current_uc = current_friendly_su.uc;
+                self:debug("current_uc = "..tostring(current_uc));
                 current_uc:attack_unit(chosen_target, nil, true); --Thankfully, this already takes into account whether ranged units are in melee mode
+                self:debug("After attack, before release");
                 current_uc:release_control();
-				--self:debug("Done ordering attack");
+				self:debug("Done ordering attack");
             else
                 --if other_is_in_chasing_area then don't reorder any moves unless our unit is effectively idle
                 --otherwise, some small variable differences might have us ordering an attack and canceling it in confusing ways
@@ -1218,14 +1220,19 @@ function pan_om:check_proximity_attacks()
                     if current_position:distance_xz(current_order_set.position) > self.tolerance_for_arrived_at_position 
                        or bearing_diff > self.tolerance_for_arrived_at_bearing then
 
+                        self:debug("Before reordering move");
+
                         local current_uc = current_friendly_su.uc;
+                        self:debug("current_uc = "..tostring(current_uc));
                         current_uc:goto_location_angle_width(
                                                                 current_order_set.position,
                                                                 current_order_set.bearing,
                                                                 current_order_set.width,
                                                                 current_order_set.move_fast
                                                             );
+                        self:debug("Before release");
                         current_uc:release_control();
+                        self:debug("Done releasing control");
 
                     elseif current_friendly_unit:is_idle() then --we have nothing to chase, we're idle and we've arrived at our position
                         --TOCONSIDER: Should we check config to see if units should be removed from attack_move_orders once they've arrived?
@@ -1359,6 +1366,20 @@ function pan_om:phase_prebattle()
         "pan_om_melee_mode_change_listener"
     );
 
+    core:add_listener(
+        "pan_gift_check",
+        "ComponentLClickUp",
+        function(context) return context.string == "button_gift_unit"; end,
+        function()
+            local selected_ids = self:get_selected_ui_ids();
+
+            --self:debug("#selected_ids = "..tostring(#selected_ids));
+            self:set_attack_move_for_units(selected_ids, false, false);
+            --self:debug("Attack move removed for gifted units");
+        end,
+        true
+    );
+
     bm:register_phase_change_callback("Deployment", function() pan_om:phase_deployment(); end);
     bm:register_phase_change_callback("Deployed", function() pan_om:phase_deployed() end);
     bm:register_phase_change_callback("VictoryCountdown", function() pan_om.current_phase = pan_phase.VICTORY_COUNTDOWN end);
@@ -1439,40 +1460,3 @@ function pan_om:phase_deployed()
 end;
 
 bm:register_phase_change_callback("PrebattleWeather", function() pan_om:phase_prebattle() end); --this kicks everything else off
-
---[[
-Old notes to self when I was trying to make this mod automatically respond to user-given orders:
-
-The unit_controller commands to attack are incorrectly clearing units from the attack_move list
-Try having an intermediate method that ignores attack commands, etc, unless the root was recently clicked?
-BUT that doesnt account for movement given by hotkeys, etc
-Can we instead filter out attacks and other commands made by unit controllers? We could probably do that for this mod, but
-it might get super messy to try to do that for other mods as well
-and what about commands from rampaging units. Would those be affected as well?
-You might just have to have a toggle instead, where the toggle acts permanently until turned off
-If so, you need a visual indicator, so you probably want to add buttons,
-or figure out how to overlay a color or image over the unit cards (keep in mind that the user could change the unit card's order)
-We still need to know what the original order was, and that order could change
-
-Ordered position appears to not change at all when an attack move is given, even as the unit is moving
-
-When unit_controller gives orders, create an exception list
-    ignore_commands[unit_id] = target (either order set or a target unit for an attack order, and possibly a flag for just ignoring everything from AI General II)
-    When responding to commands and looping through the seclected unit cards, ignore selected unit cards of rampaging units/is_routing_or_dead, and also ignore selected unit cards matching both unit_id and target
-    (This has a potential hole, where the user is giving an identical order to the identical unit selection that's being processed at the exact same time with the opposite attack move-state.
-    But the probability of that happening is so small and this is the only way I can think to implement this.)
-
-Best idea I have now:
-    Set ignore_next_move_command or ignore_next_attack_command whenever issuing an order through a unit_controller
-    The problem is I don't know if a user could give an attack or move command at the same time
-    I also don't know if rampaging attack orders cause the listener to fire, which would still throw things off
-
-    Thought: could I cache all the current orders (how to tell if an attack order was given?)
-             and then compare orders for each unit to see which ones changed, and ignore rampaging units?
-             That might be computationally intensive, but might be worth a shot
-             Also get AI General II's list and ignore orders given to those units
-
-             For attack orders, can we compare the attack order just given to the unit_controller's attack order?
-             Theoretically, another unit could also have been told to attack the same target at the same time, but that
-             is a smaller chance?
-]]--
