@@ -1,0 +1,1 @@
+This folder has dummy icons. The actual icons in the mod released on the Steam page are based on icons in the game that I don't have permission to distribute independently.

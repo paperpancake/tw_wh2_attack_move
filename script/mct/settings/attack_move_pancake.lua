@@ -87,6 +87,13 @@ add_button_for_attack_move_lock:add_dropdown_value("right", "On the Right", "", 
 add_button_for_attack_move_lock:add_dropdown_value("left", "On the Left", "");
 add_button_for_attack_move_lock:add_dropdown_value("no", "No", "");
 
+local tmp_str = "\"With other indicators\" will only use an icon if you are showing other unit indicators like threat, health bars, or unit type icons. Depending on your settings, this can allow you to hide it unless you hold the spacebar.";
+
+local show_icon_above_attack_move_unit = create_local_option("section_main", "show_icon_above_attack_move_unit", "dropdown");
+show_icon_above_attack_move_unit:add_dropdown_value("yes", "Yes", "", true);
+show_icon_above_attack_move_unit:add_dropdown_value("with other indicators", "With other indicators", tmp_str);
+show_icon_above_attack_move_unit:add_dropdown_value("no", "No", "");
+
 local redirect_radius = create_local_option("section_main", "redirect_radius", "slider");
 redirect_radius:slider_set_min_max(0, 999999);
 redirect_radius:slider_set_precision(0);

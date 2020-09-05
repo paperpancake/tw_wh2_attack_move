@@ -20,11 +20,21 @@ local pancake_default_config_text =
 hotkey_for_attack_move_lock = true
 
 ----------------------------------------------------------------------------------------------
--- Do you want this mod to add a button to the bottom bar? I recommend it, since this is
--- currently the only visual indication that a unit has an attack-move lock.
+-- Do you want this mod to add a button to the bottom bar?
 -- Use "right", "left", or false
 
 add_button_for_attack_move_lock = "right"
+
+----------------------------------------------------------------------------------------------
+-- This next setting needs to be in "quotes"
+-- "yes" - Use an icon above the unit when the attack-move lock is on
+-- "with other indicators" - Only use an icon if you are showing other unit indicators
+--                           like threat, health bars, or unit type icons.
+--                           Depending on your settings, this can allow you to hide it unless
+--                           you hold the spacebar.
+-- "no" - never use an icon above the unit
+
+show_icon_above_attack_move_unit = "always"
 
 ----------------------------------------------------------------------------------------------
 -- About how close should an enemy be to your melee units before your unit gets an attack order?
@@ -143,13 +153,20 @@ tolerance_for_arrived_at_bearing = 10
 
 ]]
 
-local pancake_20XX_XX_update_text = 
+local pancake_2020_08_13_update_text = 
 [[
 ----------------------------------------------------------------------------------------------
---        ******* New for &&&&& Future Date &&&&& *********
+--        ******* New for 2020-08-13 *********
 ----------------------------------------------------------------------------------------------
+-- This next setting needs to be in "quotes"
+-- "yes" - Use an icon above the unit when the attack-move lock is on
+-- "with other indicators" - Only use an icon if you are showing other unit indicators
+--                           like threat, health bars, or unit type icons.
+--                           Depending on your settings, this can allow you to hide it unless
+--                           you hold the spacebar.
+-- "no" - never use an icon above the unit
 
--- Future update stuff goes here. Be sure to also edit pancake_update_config_file_if_needed(), below
+show_icon_above_attack_move_unit = "always"
 
 ]]
 
@@ -158,13 +175,11 @@ local config_filename = "./mod_config/attack_move_config.txt";
 --@param a config table that reflects the current environmnet state (variables and their values) that are in the config file
 local function pancake_update_config_file_if_needed(config)
 
-    --[[    This is commented out because there are not yet any updates to check for 
     local text_to_append = "";
 
-    --update for XXXX-XX
-    if config.XXXX == nil
-            and config.XXXX == nil then
-        text_to_append = text_to_append .. pancake_XXXX_XX_update_text;
+    --update for 2020-08-13
+    if config.show_icon_above_attack_move_unit == nil then
+        text_to_append = text_to_append .. pancake_2020_08_13_update_text;
     end;
 
     if text_to_append ~= "" then
@@ -179,7 +194,6 @@ local function pancake_update_config_file_if_needed(config)
             out("&&&& "..tostring(err_str));
         end;
     end;
-    ]]--
 end;
 
 --don't call this function if the file already exists

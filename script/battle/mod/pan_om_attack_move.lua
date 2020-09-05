@@ -96,7 +96,9 @@ local pan_om = {
 
     DONT_ALLOW_REDIRECT = 999999999,
 
-    is_debug = true
+    attack_move_icons = {}, --attack_move_icons[ui_id] = the uic used to indicate there's an attack_move
+
+    is_debug = false
                             --if you want to debug targets, you can use something like
                             -- --At the top of this file
                             --  local debug_old_target = nil;
@@ -234,10 +236,7 @@ local function unpack_config_from_mct(mct, my_mod)
     end;
 
     --handle any options that don't just directly transfer from MCT to file settings
-
-    if config.hotkey_for_attack_move_lock == "no" then
-        config.hotkey_for_attack_move_lock = false;
-    end;
+    --(Note: we also do some of this handling in init_config_and_calc_values)
 
     return config, config_log_msg;
 end;
@@ -439,12 +438,24 @@ function pan_om:init_config_and_calc_values(config)
     local tmp = config.add_button_for_attack_move_lock;
     if tmp == "left" then
         self.add_button_for_attack_move_lock = "left";
-    elseif tmp == false or tmp == "no" or tmp == "No" or tmp == "false" then
+    elseif tmp == false or tmp == "no" or tmp == "No" or icon_choice == "NO" or tmp == "false" then
         self.add_button_for_attack_move_lock = false;
     else
         self.add_button_for_attack_move_lock = "right";
     end;
 
+    local icon_choice = config.show_icon_above_attack_move_unit;
+    if icon_choice == "no" or icon_choice == "No" or icon_choice == "NO" or icon_choice == false then
+        self.show_icon_above_attack_move_unit = false;
+    elseif icon_choice == "with other indicators" then
+        self.show_icon_above_attack_move_unit = "with other indicators"
+    else
+        self.show_icon_above_attack_move_unit = "yes";
+    end;
+
+    if config.hotkey_for_attack_move_lock == "no" then
+        config.hotkey_for_attack_move_lock = false;
+    end;
     self.hotkey_for_attack_move_lock = bool_check(config.hotkey_for_attack_move_lock, true);
 
     self.resume_attack_move_after_combat = bool_check(config.resume_attack_move_after_combat, true);
@@ -497,6 +508,162 @@ function pan_om:init_config_and_calc_values(config)
 
 end;
 
+function pan_om:create_attack_move_icon(ui_id)
+    if self.show_icon_above_attack_move_unit then
+
+        ui_id = tostring(ui_id);
+
+        self:debug("Trying to create an icon above unit "..ui_id);
+
+        local parent_uic = find_uicomponent(core:get_ui_root(), "unit_id_holder", ui_id);
+
+        if parent_uic then
+
+            if self.show_icon_above_attack_move_unit == "with other indicators" then
+            
+                local sibling_uic = find_uicomponent(parent_uic, "modular_parent", "icon_threat");
+                if sibling_uic then
+
+                    local attack_move_icon = UIComponent(sibling_uic:CopyComponent("attack_move_pancake_icon"));
+
+                    if attack_move_icon then
+                        
+                        attack_move_icon:SetCanResizeWidth(true)
+                        attack_move_icon:SetCanResizeHeight(true)
+                        attack_move_icon:Resize(27, 36);
+                        for i = 0, attack_move_icon:NumStates() do
+                            attack_move_icon:SetImagePath("ui\\pancake_images\\icon_attack_move_above_unit.png", i);
+                            attack_move_icon:SetVisible(true);
+                        end;
+                        attack_move_icon:SetVisible(true);
+
+                        self.attack_move_icons[ui_id] = attack_move_icon;
+
+                        self:debug("Created the icon above the unit");
+
+                    else
+                        self:debug("Failed to create the icon above the unit");
+                    end;
+
+                else
+                    self:debug("No sibling component above unit was found");
+                end;
+
+            elseif self.show_icon_above_attack_move_unit == "yes" then
+
+                --[[
+                Just adding the component doesn't seem to work
+                
+                local attack_move_icon = UIComponent(parent_uic:CreateComponent(str_name, "ui/campaign ui/region_info_pip"));
+
+                if attack_move_icon then
+                    
+                    attack_move_icon:SetCanResizeWidth(true)
+                    attack_move_icon:SetCanResizeHeight(true)
+                    attack_move_icon:Resize(27, 36);
+                    attack_move_icon:SetImagePath("ui\\pancake_images\\icon_attack_move_above_unit.png", 0);
+                    attack_move_icon:SetVisible(true);
+
+                    self.attack_move_icons[ui_id] = attack_move_icon;
+
+                    self:debug("Tried to create the icon above the unit");
+
+                else
+                    self:debug("Failed to create the icon above the unit");
+                end;
+
+                --]]
+
+                local script_ping_parent = find_uicomponent(parent_uic, "script_ping_parent");
+        
+                if script_ping_parent then
+        
+                    local uic_ping_marker = UIComponent(script_ping_parent:CreateComponent(this_mod_key .. "_ping_icon", "ui/battle ui/unit_ping_indicator"));
+ 
+                    local attack_move_icon = find_uicomponent(uic_ping_marker, "icon");
+
+                    --local current_unit = bm:get_player_alliance():armies():item(1):units():item(1);
+                    --attack_move_icon:SetContextObject("CcoBattleUnit" .. current_unit:unique_ui_id()); --this will make the icon zoom to the unit when clicked
+                                                                                                         --TOCONSIDER: Should it unlock when clicked? Or just do nothing?
+                    
+                    if attack_move_icon then
+        
+                        --attack_move_icon:SetImagePath("ui\\pancake_images\\icon_attack_move_above_unit.png");
+                        attack_move_icon:SetCanResizeWidth(true)
+                        attack_move_icon:SetCanResizeHeight(true)
+                        attack_move_icon:Resize(27, 36);
+                        attack_move_icon:SetDockOffset(0, 40);
+                        attack_move_icon:SetVisible(true);
+                        
+                        for i = 1, attack_move_icon:NumImages() - 1 do
+                            attack_move_icon:SetImagePath("ui\\pancake_images\\attack_move_transparent_pixel.png", i);
+                        end;
+                        
+                        attack_move_icon:SetImagePath("ui\\pancake_images\\icon_attack_move_above_unit.png", 0);
+                        
+                        self.attack_move_icons[ui_id] = attack_move_icon;
+
+                    end;
+                    
+                    local tmp_arrow = find_uicomponent(uic_ping_marker, "arrow");
+                    if tmp_arrow then
+                        tmp_arrow:SetVisible(false);
+                    end;
+
+                    --TODO: I think I need some of this, but maybe not all of it
+                    uic_ping_marker:StopPulseHighlight();
+                    script_ping_parent:RemoveTopMost();
+                    --script_ping_parent:UnLockPriority();
+                    uic_ping_marker:RemoveTopMost();
+                    --uic_ping_marker:UnLockPriority();
+                    for i = 0, uic_ping_marker:ChildCount() - 1 do
+                        local child_uic = UIComponent(uic_ping_marker:Find(i));
+                        if is_uicomponent(child_uic) then
+                            child_uic:StopPulseHighlight();
+                            child_uic:RemoveTopMost();
+                            --child_uic:UnLockPriority();
+                        end;
+                    end;
+
+                    --script_ping_parent:PropagatePriority(-1);
+                    
+                    self:debug("Created the icon above the unit");
+        
+                else
+                    self:debug("No script ping parent found");
+                end;
+
+            end;
+
+        end;
+    end;
+end;
+
+function pan_om:get_icon_above(ui_id)
+    return self.attack_move_icons[ui_id];
+end;
+
+function pan_om:update_icon_above(ui_id)
+
+    if self.show_icon_above_attack_move_unit then
+
+        local attack_move_icon = self:get_icon_above(ui_id);
+
+        if self:has_attack_move_turned_on(ui_id) then
+            if attack_move_icon then
+                attack_move_icon:SetVisible(true);
+            else
+                self:create_attack_move_icon(ui_id);
+            end;
+        else
+            if attack_move_icon then
+                attack_move_icon:SetVisible(false);
+            end;
+        end;
+
+    end;
+end;
+
 function pan_om:has_attack_move_turned_on(ui_id)
     return toboolean(self.attack_move_orders[ui_id]);
 end;
@@ -529,14 +696,8 @@ function pan_om:_routing_attack_mover_has_rallied(ui_id)
     end;
 end;
 
---the currently selected units will either be all added or all removed from attack_move_orders
---This must be called from a callback context
---returns true if the selected units are in attack_move_orders
---returns false if the selected units are no longer in attack_move_orders
---returns nil if nothing was selected
-function pan_om:toggle_attack_move(is_callback_context)
-    --self:debug("In toggle_attack_move");
-
+--returns a numerically indexed array of unit ids that are selected in the UI (will be an empty table if none are selected)
+function pan_om:get_selected_ui_ids()
     local uic_parent = find_uicomponent(core:get_ui_root(), "battle_orders", "cards_panel", "review_DY");
     local selected_ui_ids = {}; --list of string ids
     
@@ -554,7 +715,19 @@ function pan_om:toggle_attack_move(is_callback_context)
                 end;
             end;
 		end;
-	end;
+    end;
+    
+    return selected_ui_ids;
+end;
+
+--the currently selected units will either be all added or all removed from attack_move_orders
+--returns true if the selected units are in attack_move_orders
+--returns false if the selected units are no longer in attack_move_orders
+--returns nil if nothing was selected
+function pan_om:toggle_attack_move(is_callback_context)
+    --self:debug("In toggle_attack_move");
+
+    local selected_ui_ids = self:get_selected_ui_ids();
 
     if #selected_ui_ids == 0 then
         --TOCONSIDER: if nothing was selected, should it just do nothing?
@@ -643,6 +816,10 @@ function pan_om:set_attack_move_for_units(table_of_unit_keys, turn_on, is_callba
             else
                 self:_clear_attack_move_from_unit(unit_key);
             end;
+
+            
+            self:update_icon_above(unit_key);
+
             --self:debug("Tried to set attack_move_orders for "..tostring(unit_key).." to "..tostring(turn_on));
             --self:debug("Did it work? has_attack_move_turned_on = "..tostring(self:has_attack_move_turned_on(unit_key)));
         end;
@@ -651,6 +828,7 @@ function pan_om:set_attack_move_for_units(table_of_unit_keys, turn_on, is_callba
     if changed_attack_move then
 
         --TOCONSIDER: update any UI elements here (including marks on unit cards if you add those later, etc)
+        --            NOTE: currently I have to keep updating the visibility of the icons above the units, so that is done in the main loop
 
         if is_function(self.set_attack_move_button_state) then
             self:set_attack_move_button_state(turn_on, true);
@@ -660,18 +838,26 @@ function pan_om:set_attack_move_for_units(table_of_unit_keys, turn_on, is_callba
     --self:debug("Done with set_attack_move_for_units");
 end;
 
+--TOCONSIDER: Thoughts for multiplayer gifting:
+--            Should I check to see if the unit card exists here?
+--            Is it ok to create a script unit for different
 function pan_om:setup_map_ids_to_sus()
-	--self:debug("in setup_map_ids_to_sus");
+    self:debug("in setup_map_ids_to_sus");
+    self:debug("in setup_map_ids_to_sus, player_alliance = "..tostring(bm:get_player_alliance()));
+
     for_each_unit_in_alliance(
         bm:get_player_alliance(),
-		function(current_unit, current_army, unit_index_in_army)
+        function(current_unit, current_army, unit_index_in_army)
+            self:debug("Checking unit "..tostring(unit_index_in_army));
 			local ui_id = tostring(current_unit:unique_ui_id());
-			if not self.map_ids_to_sus[ui_id] then
+            if not self.map_ids_to_sus[ui_id] then
+                self:debug("Trying to create script unit for "..tostring(unit_index_in_army));
                 self.map_ids_to_sus[ui_id] = script_unit:new(current_army, unit_index_in_army);
+                self:debug("Was script unit created? "..tostring(self.map_ids_to_sus[ui_id]));
 			end;
         end
 	);
-	--self:debug("end of setup_map_ids_to_sus");
+	self:debug("end of setup_map_ids_to_sus");
 end;
 
 function pan_om:find_su_with_id(unique_ui_id)
@@ -932,7 +1118,7 @@ function pan_om:check_for_rallied_attack_movers()
 
                 --this should effectively check is_routing_or_dead, but broken into pieces to allow handling different cases
                 if not current_friendly_unit or current_friendly_unit:number_of_men_alive() == 0 or current_friendly_unit:is_shattered() then
-                    self.attack_move_orders[ui_id] = nil;
+                    self:_clear_attack_move_from_unit(ui_id);
                 elseif not current_friendly_unit:is_routing() then
                     self:_routing_attack_mover_has_rallied(ui_id);
                 end;
@@ -1049,10 +1235,8 @@ function pan_om:check_proximity_attacks()
                     end;
                 end;
             end;
-		end;
-
+        end;
     end;
-
 end;
 
 function pan_om:phase_prebattle()
@@ -1073,8 +1257,6 @@ function pan_om:phase_prebattle()
         if bm:is_siege_battle() then pan_om.out("Attack Move mod disabled. Skipping startup. This is a siege battle.") return; end;
     end;
 
-    require("battlemod_button_ext_pan_om");
-
     self.current_phase = pan_phase.STARTUP;
 
     self:setup_map_ids_to_sus();
@@ -1083,6 +1265,9 @@ function pan_om:phase_prebattle()
 
     if self.add_button_for_attack_move_lock then
         self:debug("Adding battlemod button for attack-move.");
+
+        require("battlemod_button_ext_pan_om");
+
         self.pan_attack_move_button = battlemod_button_ext:add_battle_order_button("pan_attack_move_button",
                                                                                     self.add_button_for_attack_move_lock == "left",
                                                                                     "ui/templates/square_medium_button_toggle");
@@ -1173,8 +1358,6 @@ function pan_om:phase_prebattle()
         end,
         "pan_om_melee_mode_change_listener"
     );
-
-    out("&&&&& before adding registering phase change callback");
 
     bm:register_phase_change_callback("Deployment", function() pan_om:phase_deployment(); end);
     bm:register_phase_change_callback("Deployed", function() pan_om:phase_deployed() end);
