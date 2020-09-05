@@ -1,5 +1,6 @@
 
-NOTE: This software is intended to use the MIT license insofar as it does not
+NOTE: Any art and icons in this mod are not included under this license.
+This software is intended to use the MIT license insofar as it does not
 conflict with the terms and conditions of modding Total War: Warhammer 2 and
 uploads of mods to the Steam Workshop for Total War: Warhammer 2. (I'm not a
 lawyer. I'm just trying to share the script for my mod with the modding community.)
