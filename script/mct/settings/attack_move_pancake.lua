@@ -219,12 +219,14 @@ tolerance_for_arrived_at_position:slider_set_min_max(10, 70);
 tolerance_for_arrived_at_position:slider_set_precision(0);
 tolerance_for_arrived_at_position:set_default_value(25);
 tolerance_for_arrived_at_position:slider_set_step_size(3, 0);
+--TODO: a bug used to have this set to 10. Adjust it up to 25 if it's been set to 10? &&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&
+--TODO: group these advanced settings visually in twos and threes if appropriate
 
-local tolerance_for_arrived_at_position = create_local_option("section_advanced", "tolerance_for_arrived_at_position", "slider");
-tolerance_for_arrived_at_position:slider_set_min_max(2, 180);
-tolerance_for_arrived_at_position:slider_set_precision(0);
-tolerance_for_arrived_at_position:set_default_value(10);
-tolerance_for_arrived_at_position:slider_set_step_size(2, 0);
+local tolerance_for_arrived_at_bearing = create_local_option("section_advanced", "tolerance_for_arrived_at_bearing", "slider");
+tolerance_for_arrived_at_bearing:slider_set_min_max(2, 180);
+tolerance_for_arrived_at_bearing:slider_set_precision(0);
+tolerance_for_arrived_at_bearing:set_default_value(10);
+tolerance_for_arrived_at_bearing:slider_set_step_size(2, 0);
 
 -------------------------------------------------------------------------------------------------------------------------------
 --- @section MCT Listeners and other management
@@ -238,7 +240,7 @@ local function update_experimental_option_states(panel_just_populated)
     local should_lock_experimentals = not ui_only__enable_experimental_options:get_selected_setting();
 
     if should_lock_experimentals then
-        enable_during_siege_battles:ui_select_value(false);
+        enable_during_siege_battles:set_selected_setting(false);
     end;
 
     if panel_just_populated or not should_lock_experimentals then --TODO: remove panel_just_populated parameter once the MCT bug is fixed that causes checkboxes to revert
@@ -285,7 +287,7 @@ core:add_listener(
 
             update_my_option_states(option_which_config);
 
-            update_experimental_option_states(true);
+            --update_experimental_option_states(true);
 
         end;
 
